@@ -25,6 +25,9 @@ public interface TreeManagerRepository extends JpaRepository<Category, Long> {
     @Query("SELECT c FROM Category c WHERE c.name = :name")
     Optional<Category> findByName(String name);
 
+    @Query(value = "SELECT * FROM treemanager WHERE name = :name", nativeQuery = true)
+    List<Category> findAllCategoriesByName(String name);
+
     @Query(value = "SELECT EXISTS (SELECT 1 FROM treemanager WHERE name = :name AND parent_id = :id)", nativeQuery = true)
     boolean existsName(Long id, String name);
 
@@ -78,4 +81,15 @@ public interface TreeManagerRepository extends JpaRepository<Category, Long> {
 
     @Query(value = "SELECT EXISTS (SELECT 1 FROM treemanager WHERE name = :folderName AND parent_id IS NULL)", nativeQuery = true)
     boolean existsParentCategory(String folderName);
+
+    @Query(value = "WITH RECURSIVE catalog_path AS ( " +
+            " SELECT id, name, parent_id, CAST(name AS character varying(255)) AS path " +
+            " FROM treemanager " +
+            " WHERE parent_id IS NULL " +
+            " UNION ALL " +
+            " SELECT d.id, d.name, d.parent_id, CAST(cp.path || '\\' || d.name AS character varying(255)) " +
+            " FROM treemanager d " +
+            " INNER JOIN catalog_path cp ON cp.id = d.parent_id)" +
+            " SELECT path FROM catalog_path WHERE name = :folderName", nativeQuery = true)
+    List<String> findPathByFolderName(String folderName);
 }

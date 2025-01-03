@@ -23,10 +23,11 @@ public class AddCategory {
     private final TreeManagerRepository treeManagerRepository;
     private final CategoryValidator categoryValidator;
 
-    public void addElement(String messageText, Update update) {
+    public void addElement(String messageText, Long chatId) {
         //НАДО ОБРАБОТАТЬ ЭТО МЕСТО НА НЕПРАВИЛЬНЫЕ ВВОДЫ И НАЛИЧИЕ НЕКОРРЕКТНЫХ СИМВОЛОВ В СООБЩЕНИИ
         //ОБЪЕКТИВНО ИСПОЛЬЗОВАТЬ РЕГУЛЯРНЫЕ ВЫРАЖЕНИЯ
         //РАЗБИТЬ НА МЕТОДЫ ==2 ==3 и отличные ситуации
+        //ЕСЛИ ПАПОК С ОДНИМ НАЗВАНИЕМ БОЛЬШЕ 1, ТО НАДО КАК-ТО ВЫБИРАТЬ В КАКУЮ ДОБАВЛЯТЬ
 
         try {
             String[] category = categoryValidator.validateAndClean(messageText).split(" ");
@@ -38,22 +39,23 @@ public class AddCategory {
                 Optional<Category> parentCategory = treeManagerRepository.findByName(parentName);
                 if (parentCategory.isPresent() && !treeManagerRepository.existsName(parentCategory.get().getId(), childName)) {
                     treeManagerRepository.addElement(childName, parentCategory.get().getId());
-                    newMessage.createNewMessage(update, "Успешно добавлен каталог: '" + childName + "' в родительскую категорию '" + parentName + "'");
+                    newMessage.createNewMessage(chatId, "Успешно добавлен каталог: '"
+                            + childName + "' в родительскую категорию '" + parentName + "'");
                 } else {
-                    newMessage.createNewMessage(update, "Родительская категория не найдена или добавляемая категория уже существует.");
+                    newMessage.createNewMessage(chatId, "Родительская категория не найдена или добавляемая категория уже существует.");
                     log.error("Родительская категория не найдена или добавляемая категория уже существует.");
                 }
             } else if (category.length == 1 && !treeManagerRepository.existsParentCategory(category[0])) {
                 treeManagerRepository.save(new Category(category[0]));
                 log.info("Корневая категория добавлена: '{}'", category[0]);
-                newMessage.createNewMessage(update, "Корневая категория добавлена: " + category[0]);
+                newMessage.createNewMessage(chatId, "Корневая категория добавлена: " + category[0]);
             } else {
                 log.error("Корневая категория '{}' уже существует", category[0]);
-                newMessage.createNewMessage(update, "Корневая категория уже существует.");
+                newMessage.createNewMessage(chatId, "Корневая категория уже существует.");
             }
         } catch (IllegalArgumentException e) {
             log.error(e.getMessage());
-            newMessage.createNewMessage(update, "Имена каталогов содержат недопустимые символы.");
+            newMessage.createNewMessage(chatId, "Имена каталогов содержат недопустимые символы.");
         }
     }
 
