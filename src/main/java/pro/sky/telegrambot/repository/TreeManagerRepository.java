@@ -31,6 +31,9 @@ public interface TreeManagerRepository extends JpaRepository<Category, Long> {
     @Query(value = "SELECT EXISTS (SELECT 1 FROM treemanager WHERE name = :name AND parent_id = :id)", nativeQuery = true)
     boolean existsName(Long id, String name);
 
+    @Query(value = "SELECT EXISTS (SELECT 1 FROM treemanager WHERE name = :folderName)", nativeQuery = true)
+    boolean existsByFolderName(String folderName);
+
     @Query(value = "DELETE FROM treemanager WHERE name = :folderName", nativeQuery = true)
     void delete(String folderName);
 
@@ -50,7 +53,7 @@ public interface TreeManagerRepository extends JpaRepository<Category, Long> {
             "SELECT repeat('--', category_tree.level - 1) || category_tree.name FROM category_tree ORDER BY path", nativeQuery = true)
     List<String> viewCategoryTree();
 
-    @Query(value = "SELECT parent_id, name FROM treemanager WHERE name = :folderName", nativeQuery = true)
+    @Query(value = "SELECT id, name FROM treemanager WHERE name = :folderName", nativeQuery = true)
     List<String> viewRemoveElements(String folderName);
 
     @Query(value = "WITH RECURSIVE folder_tree AS (" +
@@ -90,6 +93,20 @@ public interface TreeManagerRepository extends JpaRepository<Category, Long> {
             " SELECT d.id, d.name, d.parent_id, CAST(cp.path || '\\' || d.name AS character varying(255)) " +
             " FROM treemanager d " +
             " INNER JOIN catalog_path cp ON cp.id = d.parent_id)" +
-            " SELECT path FROM catalog_path WHERE name = :folderName", nativeQuery = true)
+            " SELECT CONCAT(id, ' - ', path) FROM catalog_path WHERE name = :folderName", nativeQuery = true)
     List<String> findPathByFolderName(String folderName);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM treemanager WHERE id = :id", nativeQuery = true)
+    void deleteById(Integer id);
+
+    @Modifying
+    @Transactional
+    @Query(value = "DELETE FROM treemanager WHERE name = :folderName", nativeQuery = true)
+    void deleteByFolderName(String folderName);
+
+    void removeByName(String name);
+
+    void removeCategoriesById(Long id);
 }

@@ -12,8 +12,8 @@ import org.springframework.stereotype.Service;
 public class CategoryValidator {
 
     public String validateAndClean(String input) {
-        // Разделение строки на основе команды и параметров
-        String[] parts = input.split("\\s+", 2);
+        // Приведение строки к нижнему регистру и разделение строки на основе команды и параметров
+        String[] parts = input.toLowerCase().split("\\s+", 2);
         if (parts.length < 2) {
             throw new IllegalArgumentException("Команда должна начинаться с /<команда> и содержать параметры.");
         }
@@ -30,7 +30,7 @@ public class CategoryValidator {
         // Устранение лишних пробелов и формирование новой строки
         String cleanedCatalogNames = catalogNames.replaceAll("\\s+", " ");
 
-        return cleanedCatalogNames;
+        return parts[0] + " " + cleanedCatalogNames;
     }
 
 }
