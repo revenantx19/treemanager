@@ -7,6 +7,7 @@ import com.pengrad.telegrambot.request.SendMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import pro.sky.telegrambot.messagesender.NewMessage;
 import pro.sky.telegrambot.model.Category;
 import pro.sky.telegrambot.repository.TreeManagerRepository;
@@ -21,50 +22,55 @@ import java.util.Optional;
 
 public class RemoveCategory {
 
-
-    private final TelegramBot bot;
     private final TreeManagerRepository treeManagerRepository;
     private final NewMessage newMessage;
-    private final CategoryValidator categoryValidator;
 
     private static boolean flag = false;
 
-    public void removeElement(String messageText, Long chatId) {
-        try {
-            String folderName = categoryValidator.validateAndClean(messageText).split(" ")[0];
-            if (isNumeric(folderName)) {
-                newMessage.createNewMessage(chatId, "Сейчас изобретём логику удаления......");
+    @Transactional
+    public void findAllFoldersAndRemoveIfFolderIsUnique(String params, Long chatId) {
+        List<String> pathsRemovalCategories = treeManagerRepository.findPathByFolderName(params);
+        if (pathsRemovalCategories.size() > 1) {
+            String message = String.join("\n", pathsRemovalCategories);
+            newMessage.createNewMessage(chatId, "Мы нашли следующие каталоги.\n" +
+                    "Введите /del и номер каталога, который надо удалить (например: /del 10):\n" + message);
+            activateDeletionFlagById();
+        } else {
+            if (treeManagerRepository.existsByFolderName(params)) {
+                removeFolderByName(params);
+                newMessage.createNewMessage(chatId, "Каталог успешно удалён");
+            } else {
+                newMessage.createNewMessage(chatId, "Каталог с таким именем не найден");
             }
-            List<String> allRemoveElements = treeManagerRepository.viewRemoveElements(folderName);
-            log.info("Найдено папок " + allRemoveElements.size());
-            if (allRemoveElements.size() > 1) {
-
-                StringBuilder buildMessage = new StringBuilder();
-
-                List<String> pathsRemovalCategories = treeManagerRepository.findPathByFolderName(folderName);
-
-                newMessage.createNewMessage(chatId, "Мы нашли следующие каталоги.\n" +
-                        "Выберите порядковый номер каталога, который надо удалить:\n" + buildMessage);
-
-                //treeManagerRepository.delete(folderName);
-
-            }
-        } catch (IllegalArgumentException e) {
-            log.error(e.getMessage());
-            newMessage.createNewMessage(chatId, "Имя каталога содержит недопустимые символы.");
         }
-        /**
-         * сюда надо добавить просмотр всей базы на наличие двух одинаковых имён
-         * и если они есть, то вывести список всех папок
-         * и дать выбор пользователю на удаление
-         *
-         * Также надо обработать исключениями это место
-         *
-         */
     }
 
-    public boolean isNumeric(String str) {
-        return str.matches("\\d+");
+    @Transactional
+    public void removeFolderById(Long id, Long chatId) {
+        log.info("Вошли в метод removeFolderById");
+        if (flag) {
+            removeFolderById(id);
+            newMessage.createNewMessage(chatId, "Успешно удалён каталог");
+        } else {
+            newMessage.createNewMessage(chatId, "Для удаления каталога, вначале проверьте существование его в базе (/del folder)");
+        }
+        unActivateDeletionFlagById();
+    }
+
+    public void removeFolderByName(String params) {
+        treeManagerRepository.removeByName(params);
+    }
+
+    public void removeFolderById(Long id) {
+        treeManagerRepository.removeCategoriesById(id);
+    }
+
+    private void activateDeletionFlagById() {
+        flag = true;
+    }
+
+    private void unActivateDeletionFlagById() {
+        flag = false;
     }
 
 }

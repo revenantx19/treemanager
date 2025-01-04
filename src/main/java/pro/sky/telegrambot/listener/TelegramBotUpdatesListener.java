@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import pro.sky.telegrambot.commands.AddCategory;
 import pro.sky.telegrambot.commands.RemoveCategory;
 import pro.sky.telegrambot.commands.ViewTreeCategory;
+import pro.sky.telegrambot.validator.CategoryValidator;
+
 import javax.annotation.PostConstruct;
 import java.util.List;
 
@@ -21,6 +23,7 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
     private final RemoveCategory removeCategory;
     private final ViewTreeCategory viewTreeCategory;
     private final TelegramBot telegramBot;
+    private final CategoryValidator categoryValidator;
 
     @PostConstruct
     public void init() {
@@ -32,24 +35,33 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
         updates.forEach(update -> {
             try {
                 log.info("Processing update: {}", update);
-                // ловим отправленное сообщение
-                String messageText = update.message().text();
+                String messageText = categoryValidator.validateAndClean(update.message().text().toLowerCase());
+                log.info("Проверка сообщения прошла успешно: " + messageText);
                 Long chatId = update.message().chat().id();
                 if (messageText.contains("/add")) {
                     addCategory.addElement(messageText, chatId);
                 }
-                if (messageText.contains("/del")) {
-                    removeCategory.removeElement(messageText, chatId);
+                if (messageText.startsWith("/del")) {
+                    String params = messageText.split(" ")[1];
+                    if (isNumeric(params)) {
+                        removeCategory.removeFolderById(Long.parseLong(params), chatId);
+                    } else {
+                        removeCategory.findAllFoldersAndRemoveIfFolderIsUnique(params, chatId);
+                    }
                 }
                 if (messageText.contains("/view")) {
                     viewTreeCategory.viewTree(messageText, chatId);
                 }
-            } catch (Exception e) {
+            } catch (IllegalArgumentException e) {
                 log.error(e.getMessage());
             }
 
         });
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
+    }
+
+    public boolean isNumeric(String str) {
+        return str.matches("\\d+");
     }
 
 }
