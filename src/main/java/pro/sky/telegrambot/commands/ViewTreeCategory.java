@@ -23,7 +23,8 @@ public class ViewTreeCategory {
     private final TreeManagerRepository treeManagerRepository;
     private final NewMessage newMessage;
 
-    public void viewTree(String messageText, Long chatId) {
+    public void viewTree(Long chatId) {
+        log.info("Вошли в метод viewTree");
         StringBuilder treeString = new StringBuilder();
         treeManagerRepository.viewCategoryTree()
                 .forEach(category -> treeString.append(category).append("\n"));

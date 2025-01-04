@@ -19,45 +19,31 @@ import java.util.Optional;
 public class AddCategory {
 
     private final NewMessage newMessage;
-    private final TelegramBot bot;
     private final TreeManagerRepository treeManagerRepository;
-    private final CategoryValidator categoryValidator;
 
-    public void addElement(String messageText, Long chatId) {
+    private static boolean flag = false;
+
+    public void addChildFolder(String parentFolderName, String childFolderName, Long chatId) {
         //НАДО ОБРАБОТАТЬ ЭТО МЕСТО НА НЕПРАВИЛЬНЫЕ ВВОДЫ И НАЛИЧИЕ НЕКОРРЕКТНЫХ СИМВОЛОВ В СООБЩЕНИИ
         //ОБЪЕКТИВНО ИСПОЛЬЗОВАТЬ РЕГУЛЯРНЫЕ ВЫРАЖЕНИЯ
         //РАЗБИТЬ НА МЕТОДЫ ==2 ==3 и отличные ситуации
         //ЕСЛИ ПАПОК С ОДНИМ НАЗВАНИЕМ БОЛЬШЕ 1, ТО НАДО КАК-ТО ВЫБИРАТЬ В КАКУЮ ДОБАВЛЯТЬ
 
-        try {
-            String[] category = categoryValidator.validateAndClean(messageText).split(" ");
-            System.out.println("category.length = " + category.length);
-            if (category.length == 2) {
-                String parentName = category[0];
-                String childName = category[1];
-                log.info("Добавляем '{}' в родительскую категорию: '{}'", childName, parentName);
-                Optional<Category> parentCategory = treeManagerRepository.findByName(parentName);
-                if (parentCategory.isPresent() && !treeManagerRepository.existsName(parentCategory.get().getId(), childName)) {
-                    treeManagerRepository.addElement(childName, parentCategory.get().getId());
-                    newMessage.createNewMessage(chatId, "Успешно добавлен каталог: '"
-                            + childName + "' в родительскую категорию '" + parentName + "'");
-                } else {
-                    newMessage.createNewMessage(chatId, "Родительская категория не найдена или добавляемая категория уже существует.");
-                    log.error("Родительская категория не найдена или добавляемая категория уже существует.");
-                }
-            } else if (category.length == 1 && !treeManagerRepository.existsParentCategory(category[0])) {
-                treeManagerRepository.save(new Category(category[0]));
-                log.info("Корневая категория добавлена: '{}'", category[0]);
-                newMessage.createNewMessage(chatId, "Корневая категория добавлена: " + category[0]);
-            } else {
-                log.error("Корневая категория '{}' уже существует", category[0]);
-                newMessage.createNewMessage(chatId, "Корневая категория уже существует.");
-            }
-        } catch (IllegalArgumentException e) {
-            log.error(e.getMessage());
-            newMessage.createNewMessage(chatId, "Имена каталогов содержат недопустимые символы.");
+        log.info("Добавляем '{}' в родительскую категорию: '{}'", childFolderName, parentFolderName);
+        Optional<Category> parentCategory = treeManagerRepository.findByName(parentFolderName);
+        if (parentCategory.isPresent() && !treeManagerRepository.existsName(parentCategory.get().getId(), childFolderName)) {
+            treeManagerRepository.addElement(childFolderName, parentCategory.get().getId());
+            newMessage.createNewMessage(chatId, "Успешно добавлен каталог: '"
+                    + childFolderName + "' в родительскую категорию '" + parentFolderName + "'");
+        } else {
+            newMessage.createNewMessage(chatId, "Родительская категория не найдена или добавляемая категория уже существует.");
+            log.error("Родительская категория не найдена или добавляемая категория уже существует.");
         }
     }
 
-
+    public void addRootFolder(String rootFolderName, Long chatId) {
+        treeManagerRepository.save(new Category(rootFolderName));
+        log.info("Корневая категория добавлена: '{}'", rootFolderName);
+        newMessage.createNewMessage(chatId, "Корневая категория добавлена: " + rootFolderName);
+    }
 }

@@ -39,7 +39,12 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
                 log.info("Проверка сообщения прошла успешно: " + messageText);
                 Long chatId = update.message().chat().id();
                 if (messageText.contains("/add")) {
-                    addCategory.addElement(messageText, chatId);
+                    String[] folderNames = messageText.split(" ");
+                    if (folderNames.length == 3) {
+                        addCategory.addChildFolder(folderNames[1], folderNames[2], chatId);
+                    } else if (folderNames.length == 2) {
+                        addCategory.addRootFolder(folderNames[1], chatId);
+                    }
                 }
                 if (messageText.startsWith("/del")) {
                     String params = messageText.split(" ")[1];
@@ -50,7 +55,7 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
                     }
                 }
                 if (messageText.contains("/view")) {
-                    viewTreeCategory.viewTree(messageText, chatId);
+                    viewTreeCategory.viewTree(chatId);
                 }
             } catch (IllegalArgumentException e) {
                 log.error(e.getMessage());
