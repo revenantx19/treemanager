@@ -14,6 +14,11 @@ public class CategoryValidator {
     public String validateAndClean(String input) {
         // Приведение строки к нижнему регистру и разделение строки на основе команды и параметров
         String[] parts = input.toLowerCase().split("\\s+", 2);
+
+        if (parts[0].equalsIgnoreCase("/view")) {
+            return parts[0];
+        }
+
         if (parts.length < 2) {
             throw new IllegalArgumentException("Команда должна начинаться с /<команда> и содержать параметры.");
         }
