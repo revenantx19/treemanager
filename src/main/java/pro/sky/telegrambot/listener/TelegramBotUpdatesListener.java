@@ -39,7 +39,7 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
             try {
                 log.info("Processing update: {}", update);
                 String messageText = categoryValidator.validateAndClean(update.message().text().toLowerCase());
-                log.info("Проверка сообщения прошла успешно: " + messageText);
+                log.info("Проверка сообщения прошла успешно: {}", messageText);
                 if (messageText.contains("/add")) {
                     String[] folderNames = messageText.split(" ");
                     if (folderNames.length == 3) {
