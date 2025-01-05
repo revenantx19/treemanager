@@ -4,12 +4,15 @@ package pro.sky.telegrambot.validator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import pro.sky.telegrambot.messagesender.NewMessage;
 
 @Slf4j
 @RequiredArgsConstructor
 @Service
 
 public class CategoryValidator {
+
+    private final NewMessage newMessage;
 
     public String validateAndClean(String input) {
         // Приведение строки к нижнему регистру и разделение строки на основе команды и параметров
