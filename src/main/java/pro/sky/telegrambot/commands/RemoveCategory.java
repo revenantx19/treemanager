@@ -32,7 +32,7 @@ public class RemoveCategory {
         List<String> pathsRemovalCategories = treeManagerRepository.findPathByFolderName(params);
         if (pathsRemovalCategories.size() > 1) {
             String message = String.join("\n", pathsRemovalCategories);
-            newMessage.createNewMessage(chatId, "Мы нашли следующие каталоги.\n" +
+            newMessage.createNewMessage(chatId, "Найдены следующие каталоги.\n" +
                     "Введите /del и номер каталога, который надо удалить (например: /del 10):\n" + message);
             activateDeletionFlagById();
         } else {
