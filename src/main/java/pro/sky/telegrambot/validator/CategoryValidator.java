@@ -6,6 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import pro.sky.telegrambot.messagesender.NewMessage;
 
+import java.util.Arrays;
+
 @Slf4j
 @RequiredArgsConstructor
 @Service
@@ -14,31 +16,23 @@ public class CategoryValidator {
 
     private final NewMessage newMessage;
 
-    public String validateAndClean(String input) {
-        // Приведение строки к нижнему регистру и разделение строки на основе команды и параметров
-        String[] parts = input.toLowerCase().split("\\s+", 2);
-
-        if (parts[0].equalsIgnoreCase("/view")) {
-            return parts[0];
+    public String[] validateAndClean(String input) {
+        String[] parts = input.toLowerCase().split("\\s+", 3);
+        String invalidCharsPattern = "[\\\\/:;*?\"<>|^'%`~@]";
+        if (!parts[0].startsWith("/")) {
+            throw new IllegalArgumentException("Команда должна начинаться с '/'");
         }
-
-        if (parts.length < 2) {
-            throw new IllegalArgumentException("Команда должна начинаться с /<команда> и содержать параметры.");
+        parts[0] = parts[0].replace("/","");
+        if (parts.length == 1) {
+            return parts;
+        } else {
+            if ((parts.length == 2 || parts.length == 3) && !parts[1].matches(".*" + invalidCharsPattern + ".*")) {
+                return parts; //Arrays.copyOfRange(parts, 1, parts.length);
+            } else {
+                throw new IllegalArgumentException("Имена каталогов содержат запрещенные символы, либо количество параметров больше 2");
+            }
         }
-        // Имена каталогов
-        String catalogNames = parts[1];
-        System.out.println("catalogNames = " + catalogNames);
-
-        // Проверка на запрещенные символы
-        String invalidCharsPattern = "[\\\\/:;*?\"<>|^']";
-        if (catalogNames.matches(".*" + invalidCharsPattern + ".*")) {
-            throw new IllegalArgumentException("Имена каталогов содержат запрещенные символы.");
-        }
-
-        // Устранение лишних пробелов и формирование новой строки
-        String cleanedCatalogNames = catalogNames.replaceAll("\\s+", " ");
-
-        return parts[0] + " " + cleanedCatalogNames;
+        //return parts[0] + " " + cleanedCatalogNames;
     }
 
 }
