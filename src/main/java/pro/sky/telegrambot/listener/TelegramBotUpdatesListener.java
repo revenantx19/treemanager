@@ -6,13 +6,16 @@ import com.pengrad.telegrambot.model.Update;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import pro.sky.telegrambot.commands.AddCategory;
-import pro.sky.telegrambot.commands.RemoveCategory;
-import pro.sky.telegrambot.commands.ViewTreeCategory;
+import pro.sky.telegrambot.commands.impl.AddCategoryCommand;
+import pro.sky.telegrambot.commands.impl.RemoveCategoryCommand;
+import pro.sky.telegrambot.commands.impl.ViewTreeCategoryCommand;
+import pro.sky.telegrambot.context.MessageContext;
+import pro.sky.telegrambot.invoker.Invoker;
 import pro.sky.telegrambot.messagesender.NewMessage;
 import pro.sky.telegrambot.validator.CategoryValidator;
 
 import javax.annotation.PostConstruct;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -20,12 +23,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TelegramBotUpdatesListener implements UpdatesListener {
 
-    private final AddCategory addCategory;
-    private final RemoveCategory removeCategory;
-    private final ViewTreeCategory viewTreeCategory;
+    private final AddCategoryCommand addCategory;
+    private final RemoveCategoryCommand removeCategory;
+    private final ViewTreeCategoryCommand viewTreeCategory;
     private final TelegramBot telegramBot;
     private final CategoryValidator categoryValidator;
     private final NewMessage newMessage;
+    private final Invoker invoker;
 
     @PostConstruct
     public void init() {
@@ -35,35 +39,43 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
     @Override
     public int process(List<Update> updates) {
         updates.forEach(update -> {
-            Long chatId = update.message().chat().id();
+
             try {
-                log.info("Processing update: {}", update);
-                String messageText = categoryValidator.validateAndClean(update.message().text().toLowerCase());
-                log.info("Проверка сообщения прошла успешно: {}", messageText);
-                if (messageText.contains("/add")) {
-                    String[] folderNames = messageText.split(" ");
-                    if (folderNames.length == 3) {
-                        addCategory.addChildFolder(folderNames[1], folderNames[2], chatId);
-                    } else if (folderNames.length == 2 && !isNumeric(folderNames[1])) {
-                        addCategory.addRootFolder(folderNames[1], chatId);
+                String[] parameters = categoryValidator.validateAndClean(update.message().text());
+                for (String parameter : parameters) {
+                    log.info(parameter);
+                }
+                MessageContext messageContext = new MessageContext(update.message().chat().id(),
+                                                                   parameters);
+                if (messageContext.getMessage()[0].contains("/add")) {
+                    if (messageContext.getMessage().length == 3) {
+                        addCategory.addChildFolder(messageContext.getMessage()[1],
+                                                   messageContext.getMessage()[2],
+                                                   messageContext.getChatId());
+                    } else if (messageContext.getMessage().length == 2 && !isNumeric(messageContext.getMessage()[1])) {
+                        addCategory.addRootFolder(messageContext.getMessage()[1], messageContext.getChatId());
                     } else {
-                        addCategory.addFolderById(Long.parseLong(folderNames[1]), chatId);
+                        addCategory.addFolderById(Long.parseLong(messageContext.getMessage()[1]), messageContext.getChatId());
                     }
                 }
-                if (messageText.startsWith("/del")) {
-                    String params = messageText.split(" ")[1];
-                    if (isNumeric(params)) {
-                        removeCategory.removeFolderById(Long.parseLong(params), chatId);
+                if (messageContext.getMessage()[0].contains("/del")) {
+                    if (isNumeric(messageContext.getMessage()[1])) {
+                        removeCategory.removeFolderById(Long.parseLong(messageContext.getMessage()[1]), messageContext.getChatId());
                     } else {
-                        removeCategory.findAllFoldersAndRemoveIfFolderIsUnique(params, chatId);
+                        removeCategory.findAllFoldersAndRemoveIfFolderIsUnique(messageContext.getMessage()[1], messageContext.getChatId());
                     }
                 }
-                if (messageText.contains("/view")) {
-                    viewTreeCategory.viewTree(chatId);
+                if (messageContext.getMessage()[0].contains("view")) {
+                    viewTreeCategory.viewTree(messageContext.getChatId());
                 }
+                if (messageContext.getMessage()[0].contains("upload")) {
+                    log.info("Запуск upload команды");
+                    invoker.runCommand(messageContext);
+                }
+
             } catch (IllegalArgumentException e) {
-                newMessage.createNewMessage(chatId, "Команда должна начинаться с /<команда> и содержать параметры.");
-                log.error(e.getMessage());
+                log.info("Недопустимый формат команды");
+                e.getMessage();
             }
 
         });

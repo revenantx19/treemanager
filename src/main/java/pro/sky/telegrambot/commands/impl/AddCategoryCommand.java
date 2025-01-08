@@ -1,16 +1,12 @@
-package pro.sky.telegrambot.commands;
+package pro.sky.telegrambot.commands.impl;
 
-import com.pengrad.telegrambot.TelegramBot;
-import com.pengrad.telegrambot.model.Update;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import pro.sky.telegrambot.messagesender.NewMessage;
 import pro.sky.telegrambot.model.Category;
 import pro.sky.telegrambot.repository.TreeManagerRepository;
-import pro.sky.telegrambot.validator.CategoryValidator;
 
-import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,7 +14,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 
-public class AddCategory {
+public class AddCategoryCommand {
 
     private final NewMessage newMessage;
     private final TreeManagerRepository treeManagerRepository;
