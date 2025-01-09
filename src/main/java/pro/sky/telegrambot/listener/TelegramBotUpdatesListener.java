@@ -65,8 +65,13 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
                         removeCategory.findAllFoldersAndRemoveIfFolderIsUnique(messageContext.getMessage()[1], messageContext.getChatId());
                     }
                 }
-                if (messageContext.getMessage()[0].contains("view")) {
-                    viewTreeCategory.viewTree(messageContext.getChatId());
+                if (messageContext.getMessage()[0].contains("viewtree")) {
+                    log.info("Запуск viewtree команды");
+                    invoker.runCommand(messageContext);
+                }
+                if (messageContext.getMessage()[0].contains("download")) {
+                    log.info("Запуск download команды");
+                    invoker.runCommand(messageContext);
                 }
                 if (messageContext.getMessage()[0].contains("upload")) {
                     log.info("Запуск upload команды");
