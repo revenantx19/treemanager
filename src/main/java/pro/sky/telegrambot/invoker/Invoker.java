@@ -27,7 +27,7 @@ public class Invoker {
         log.info("Получент контест сообщения" + Arrays.toString(messageContext.getMessage()));
         Command command = commandMap.get(messageContext.getMessage()[0]);
         if (command != null) {
-            command.execute();
+            command.execute(messageContext);
         }
     }
 
