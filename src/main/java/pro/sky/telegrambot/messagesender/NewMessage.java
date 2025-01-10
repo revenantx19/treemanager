@@ -14,8 +14,9 @@ public class NewMessage {
 
     private final TelegramBot bot;
 
-    public void createNewMessage(Long chatId, String message) {
+    public String createNewMessage(Long chatId, String message) {
         bot.execute(new SendMessage(chatId, message));
+        return message;
     }
 
 }

@@ -24,8 +24,6 @@ import java.util.List;
 public class TelegramBotUpdatesListener implements UpdatesListener {
 
     private final AddCategoryCommand addCategory;
-    private final RemoveCategoryCommand removeCategory;
-    private final ViewTreeCategoryCommand viewTreeCategory;
     private final TelegramBot telegramBot;
     private final CategoryValidator categoryValidator;
     private final NewMessage newMessage;
@@ -39,47 +37,42 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
     @Override
     public int process(List<Update> updates) {
         updates.forEach(update -> {
-
             try {
                 String[] parameters = categoryValidator.validateAndClean(update.message().text());
-                for (String parameter : parameters) {
-                    log.info(parameter);
-                }
+
                 MessageContext messageContext = new MessageContext(update.message().chat().id(),
                                                                    parameters);
-                if (messageContext.getMessage()[0].contains("/add")) {
+                Long chatId = update.message().chat().id();
+                if (messageContext.getCommandName().contains("/add")) {
                     if (messageContext.getMessage().length == 3) {
                         addCategory.addChildFolder(messageContext.getMessage()[1],
                                                    messageContext.getMessage()[2],
                                                    messageContext.getChatId());
-                    } else if (messageContext.getMessage().length == 2 && !isNumeric(messageContext.getMessage()[1])) {
+                    } else if (messageContext.getMessage().length == 2 && !messageContext.isNumeric()) {
                         addCategory.addRootFolder(messageContext.getMessage()[1], messageContext.getChatId());
                     } else {
                         addCategory.addFolderById(Long.parseLong(messageContext.getMessage()[1]), messageContext.getChatId());
                     }
                 }
-                if (messageContext.getMessage()[0].contains("/del")) {
-                    if (isNumeric(messageContext.getMessage()[1])) {
-                        removeCategory.removeFolderById(Long.parseLong(messageContext.getMessage()[1]), messageContext.getChatId());
-                    } else {
-                        removeCategory.findAllFoldersAndRemoveIfFolderIsUnique(messageContext.getMessage()[1], messageContext.getChatId());
-                    }
-                }
-                if (messageContext.getMessage()[0].contains("viewtree")) {
-                    log.info("Запуск viewtree команды");
+                if (messageContext.getCommandName().contains("del")) {
+                    log.info("Запуск del команды");
                     invoker.runCommand(messageContext);
                 }
-                if (messageContext.getMessage()[0].contains("download")) {
+                if (messageContext.getCommandName().contains("viewTree")) {
+                    log.info("Запуск viewTree команды");
+                    invoker.runCommand(messageContext);
+                }
+                if (messageContext.getCommandName().contains("download")) {
                     log.info("Запуск download команды");
                     invoker.runCommand(messageContext);
                 }
-                if (messageContext.getMessage()[0].contains("upload")) {
+                if (messageContext.getCommandName().contains("upload")) {
                     log.info("Запуск upload команды");
                     invoker.runCommand(messageContext);
                 }
 
             } catch (IllegalArgumentException e) {
-                log.info("Недопустимый формат команды");
+                log.info(newMessage.createNewMessage(chatId, "Каталог с таким именем не найден"));
                 e.getMessage();
             }
 
@@ -87,8 +80,8 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
         return UpdatesListener.CONFIRMED_UPDATES_ALL;
     }
 
-    public boolean isNumeric(String str) {
-        return str.matches("\\d+");
-    }
+    //public boolean isNumeric(String str) {
+    //    return str.matches("\\d+");
+    //}
 
 }
