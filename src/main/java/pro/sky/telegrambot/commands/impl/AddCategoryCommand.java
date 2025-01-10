@@ -2,26 +2,29 @@ package pro.sky.telegrambot.commands.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import pro.sky.telegrambot.commands.Command;
+import pro.sky.telegrambot.context.MessageContext;
 import pro.sky.telegrambot.messagesender.NewMessage;
 import pro.sky.telegrambot.model.Category;
 import pro.sky.telegrambot.repository.TreeManagerRepository;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @RequiredArgsConstructor
 @Slf4j
 @Service
-
-public class AddCategoryCommand {
+@Component("add")
+public class AddCategoryCommand implements Command {
 
     private final NewMessage newMessage;
     private final TreeManagerRepository treeManagerRepository;
 
     private static boolean flag = false;
     private static String saverChildFolderName = null;
-    private static Optional<Category> saverParentFolderEntity = null;
 
     /**
      * Описание работы метода addChildFolder:<br>
@@ -39,80 +42,115 @@ public class AddCategoryCommand {
      * @param chatId           - id Telegram чата
      */
 
-    public void addChildFolder(String parentFolderName, String childFolderName, Long chatId) {
-        saverChildFolderName = childFolderName;
-        List<String> directoriesForAddedFolders = treeManagerRepository.findPathByFolderName(parentFolderName);
+    public void execute(MessageContext messageContext) {
+        log.info("Запуск метода execute команды add");
+        Long chatId = messageContext.getChatId();
+        List<String> directoriesForAddedFolders = treeManagerRepository.findPathByFolderName(messageContext.getP1());
 
-        if (directoriesForAddedFolders.isEmpty()) {
-            log.error("Каталогов для добавления не найдено");
-            newMessage.createNewMessage(chatId,"Каталогов для добавления не найдено");
-        } else {
-            String message = String.join("\n", directoriesForAddedFolders);
-            newMessage.createNewMessage(chatId, "Найдены следующие каталоги.\n" +
-                    "Введите /add и номер каталога, в который надо добавить (например: /add 10):\n" + message);
-            activateAddingFlagById();
+        try {
+            if (flag && messageContext.firstParamIsNumeric()) {
+                addChildCategory(messageContext);
+            } else {
+                addRootOrSelectExistingCategory(messageContext, directoriesForAddedFolders);
+            }
+        } catch (NoSuchElementException e) {
+            log.error(newMessage.createNewMessage(chatId, "Родительская категория не найдена."));
+        } catch (NumberFormatException e) {
+            log.error(newMessage.createNewMessage(chatId, "Некорректный ID: " + messageContext.getP1()));
+        } catch (Exception e) {
+            log.error(newMessage.createNewMessage(chatId, "Произошла ошибка: " + e.getMessage()));
         }
 
         /*
-        if (!treeManagerRepository.existsChildUnderParent(childFolderName, parentFolderName) || directoriesForAddedFolders.size() > 1) {
-            if (directoriesForAddedFolders.size() == 1) {
-                log.info("Добавляем '{}' в родительскую категорию: '{}'", childFolderName, parentFolderName);
-                saverParentFolderEntity = treeManagerRepository.findByName(parentFolderName);
-                if (saverParentFolderEntity.isPresent() ) {
-                    treeManagerRepository.addElement(childFolderName, saverParentFolderEntity.get().getId());
-                    newMessage.createNewMessage(chatId, "Успешно добавлен каталог: '"
-                            + childFolderName + "' в родительскую категорию '" + parentFolderName + "'");
-                    log.info("Каталог {} успешно добавлен", childFolderName);
+        if (flag && messageContext.firstParamIsNumeric()) {
+            Long folderId = Long.parseLong(messageContext.getP1());
+            Optional<Category> parentFolder = treeManagerRepository.findById(folderId);
+            //так как добавлять мы можем уже в ВЫБИРАЕМУЮ родительскую категорию
+            //значит нужно осуществить проверку нет ли там уже добавляемого потомка
+            if (!treeManagerRepository.existsByParentIdAndName(parentFolder, saverChildFolderName)) {
+                Optional<Category> parentCategory = treeManagerRepository.findById(folderId);
+                treeManagerRepository.addElement(saverChildFolderName, parentCategory.get().getId());
+                log.info(newMessage.createNewMessage(chatId, "Каталог успешно добавлен"));
+            } else {
+                log.warn(newMessage.createNewMessage(chatId, "Подкаталог уже существует, либо предыдущее сообщение иного формата (/add <folderName>)"));
+            }
+            unActivateAddFlagById();
+        } else {
+            if (messageContext.getMessage().length == 2) {
+                log.info("Запуск метода добавления корневой категории");
+                if (!treeManagerRepository.existsByNameAndParentIdIsNull(messageContext.getP1())) {
+                    treeManagerRepository.save(new Category(messageContext.getP1()));
+                    log.info(newMessage.createNewMessage(chatId, "Корневая категория добавлена: " + messageContext.getP1()));
                 } else {
-                    newMessage.createNewMessage(chatId, "Родительская категория не найдена.");
-                    log.error("Родительская категория не найдена.");
+                    log.warn(newMessage.createNewMessage(chatId, "Корневая категория уже существует"));
                 }
             } else {
-                String message = String.join("\n", directoriesForAddedFolders);
-                newMessage.createNewMessage(chatId, "Найдены следующие каталоги.\n" +
-                        "Введите /add и номер каталога, в который надо добавить (например: /add 10):\n" + message);
-                activateAddingFlagById();
+                if (!directoriesForAddedFolders.isEmpty()) {
+                    log.info(newMessage.createNewMessage(chatId, "Найдены следующие каталоги.\n" +
+                            "Введите /add и номер каталога, в который надо добавить (например: /add 10):\n" +
+                            String.join("\n", directoriesForAddedFolders)));
+                    activateAddFlagAndSaveChildName(messageContext.getP2());
+                } else {
+                    log.error(newMessage.createNewMessage(chatId, "Каталогов для добавления не найдено"));
+                }
             }
-        } else {
-            log.error("Родительская и дочерняя категория уже существуют.");
-            newMessage.createNewMessage(chatId, "Родительская и дочерняя категория уже существуют.");
         }
 
          */
 
     }
 
-    public void addRootFolder(String rootFolderName, Long chatId) {
-        log.info("Вход в метод addRootFolder");
-        if (!treeManagerRepository.existsByNameAndParentIdIsNull(rootFolderName)) {
-            treeManagerRepository.save(new Category(rootFolderName));
-            log.info("Корневая категория добавлена: '{}'", rootFolderName);
-            newMessage.createNewMessage(chatId, "Корневая категория добавлена: " + rootFolderName);
-        } else {
-            newMessage.createNewMessage(chatId, "Корневая категория уже существует");
-        }
-    }
-
-    public void addFolderById(Long folderId, Long chatId) {
-        log.info("Вход в метод addFolderById");
+    private void addChildCategory(MessageContext messageContext) {
+        Long folderId = Long.parseLong(messageContext.getP1());
+        Long chatId = messageContext.getChatId();
         Optional<Category> parentFolder = treeManagerRepository.findById(folderId);
-        //так как добавлять мы может уже в ВЫБИРАЕМУЮ родительскую категорию
-        //значит нужно осуществить проверку нет ли там уже добавляемого потомка
-        if (flag && !treeManagerRepository.existsByParentIdAndName(parentFolder, saverChildFolderName)) {
-            Optional<Category> parentCategory = treeManagerRepository.findById(folderId);
-            treeManagerRepository.addElement(saverChildFolderName, parentCategory.get().getId());
-            newMessage.createNewMessage(chatId, "Каталог успешно добавлен");
+        if (parentFolder.isPresent()){
+            if (!treeManagerRepository.existsByParentIdAndName(parentFolder, saverChildFolderName)) {
+                treeManagerRepository.addElement(saverChildFolderName, parentFolder.get().getId());
+                log.info(newMessage.createNewMessage(chatId, "Каталог успешно добавлен"));
+            } else {
+                log.warn(newMessage.createNewMessage(chatId, "Подкаталог уже существует, либо предыдущее сообщение иного формата (/add <folderName>)"));
+            }
+            unActivateAddFlagById();
         } else {
-            newMessage.createNewMessage(chatId, "Подкаталог уже существует, либо предыдущее сообщение иного формата (/add <folderName>)");
+            throw new NoSuchElementException("Категория с ID " + folderId + " не найдена.");
         }
-        unActivateAddingFlagById();
     }
 
-    private void activateAddingFlagById() {
+    private void addRootOrSelectExistingCategory(MessageContext messageContext, List<String> directoriesForAddedFolders) {
+        log.info("Запуск метода добавления корневой категории");
+        Long chatId = messageContext.getChatId();
+        if (messageContext.getMessage().length == 2) {
+            if (!treeManagerRepository.existsByNameAndParentIdIsNull(messageContext.getP1())) {
+                treeManagerRepository.save(new Category(messageContext.getP1()));
+                log.info(newMessage.createNewMessage(chatId, "Корневая категория добавлена: " + messageContext.getP1()));
+            } else {
+                log.warn(newMessage.createNewMessage(chatId, "Корневая категория уже существует"));
+            }
+        } else {
+            if (!directoriesForAddedFolders.isEmpty()) {
+                log.info(newMessage.createNewMessage(chatId, "Найдены следующие каталоги.\n" +
+                        "Введите /add и номер каталога, в который надо добавить (например: /add 10):\n" +
+                        String.join("\n", directoriesForAddedFolders)));
+                activateAddFlagAndSaveChildName(messageContext.getP2());
+            } else {
+                log.error(newMessage.createNewMessage(chatId, "Каталогов для добавления не найдено"));
+            }
+        }
+    }
+
+    @Override
+    public String getNameCommand() {
+        return "add";
+    }
+
+    private void activateAddFlagAndSaveChildName(String p2) {
+        saverChildFolderName = p2;
         flag = true;
     }
 
-    private void unActivateAddingFlagById() {
+    private void unActivateAddFlagById() {
+        saverChildFolderName = null;
         flag = false;
     }
 }

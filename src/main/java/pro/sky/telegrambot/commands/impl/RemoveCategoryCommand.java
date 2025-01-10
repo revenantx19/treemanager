@@ -26,7 +26,7 @@ public class RemoveCategoryCommand implements Command {
     public void execute(MessageContext messageContext) {
         log.info("Запуск метода execute команды del");
         Long chatId = messageContext.getChatId();
-        if (flag && messageContext.isNumeric()) {
+        if (flag && messageContext.firstParamIsNumeric()) {
             removeFolderById(Long.valueOf(messageContext.getP1()));
             log.info(newMessage.createNewMessage(chatId, "Успешно удалён каталог"));
             unActivateDeletionFlagById();
