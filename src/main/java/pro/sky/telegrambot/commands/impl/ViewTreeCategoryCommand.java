@@ -13,7 +13,7 @@ import pro.sky.telegrambot.repository.TreeManagerRepository;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-@Component("viewtree")
+@Component("viewTree")
 public class ViewTreeCategoryCommand implements Command {
     private final NewMessage newMessage;
     private final TreeManagerRepository treeManagerRepository;
@@ -27,16 +27,8 @@ public class ViewTreeCategoryCommand implements Command {
         newMessage.createNewMessage(messageContext.getChatId(), String.valueOf(treeString));
     }
 
-    public void viewTree(Long chatId) {
-        log.info("Вошли в метод viewTree");
-        StringBuilder treeString = new StringBuilder();
-        treeManagerRepository.viewCategoryTree()
-                .forEach(category -> treeString.append(category).append("\n"));
-        newMessage.createNewMessage(chatId, String.valueOf(treeString));
-    }
-
     @Override
     public String getNameCommand() {
-        return "viewtree";
+        return "viewTree";
     }
 }

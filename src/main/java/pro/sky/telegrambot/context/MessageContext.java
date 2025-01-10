@@ -16,4 +16,20 @@ public class MessageContext {
         this.message = message;
     }
 
+    public String getCommandName() {
+        return message[0];
+    }
+
+    public String getP1() {
+        return message[1];
+    }
+
+    public String getP2() {
+        return message[2];
+    }
+
+    public boolean isNumeric() {
+        return getP1().matches("\\d+");
+    }
+
 }

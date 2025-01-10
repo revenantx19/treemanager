@@ -14,10 +14,8 @@ import java.util.Arrays;
 
 public class CategoryValidator {
 
-    private final NewMessage newMessage;
-
     public String[] validateAndClean(String input) {
-        String[] parts = input.toLowerCase().split("\\s+", 3);
+        String[] parts = input.split("\\s+", 3);
         String invalidCharsPattern = "[\\\\/:;*?\"<>|^'%`~@]";
         if (!parts[0].startsWith("/")) {
             throw new IllegalArgumentException("Команда должна начинаться с '/'");
@@ -32,7 +30,6 @@ public class CategoryValidator {
                 throw new IllegalArgumentException("Имена каталогов содержат запрещенные символы, либо количество параметров больше 2");
             }
         }
-        //return parts[0] + " " + cleanedCatalogNames;
     }
 
 }
