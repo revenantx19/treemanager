@@ -28,7 +28,7 @@ public class MessageContext {
         return message[2];
     }
 
-    public boolean isNumeric() {
+    public boolean firstParamIsNumeric() {
         return getP1().matches("\\d+");
     }
 
