@@ -32,11 +32,10 @@ public class CategoryValidator {
             return parts;
         } else {
             if ((parts.length == 2 || parts.length == 3) && !parts[1].matches(".*" + invalidCharsPattern + ".*")) {
-                return parts; //Arrays.copyOfRange(parts, 1, parts.length);
+                return parts;
             } else {
                 throw new IllegalArgumentException("Имена каталогов содержат запрещенные символы, либо количество параметров больше 2");
             }
         }
     }
-
 }

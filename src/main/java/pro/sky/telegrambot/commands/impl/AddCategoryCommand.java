@@ -41,7 +41,7 @@ public class AddCategoryCommand implements Command {
      * @param childFolderName  - имя добавляемого каталога потомка (ребёнка)
      * @param chatId           - id Telegram чата
      */
-
+    @Override
     public void execute(MessageContext messageContext) {
         log.info("Запуск метода execute команды add");
         Long chatId = messageContext.getChatId();
@@ -60,44 +60,11 @@ public class AddCategoryCommand implements Command {
         } catch (Exception e) {
             log.error(newMessage.createNewMessage(chatId, "Произошла ошибка: " + e.getMessage()));
         }
+    }
 
-        /*
-        if (flag && messageContext.firstParamIsNumeric()) {
-            Long folderId = Long.parseLong(messageContext.getP1());
-            Optional<Category> parentFolder = treeManagerRepository.findById(folderId);
-            //так как добавлять мы можем уже в ВЫБИРАЕМУЮ родительскую категорию
-            //значит нужно осуществить проверку нет ли там уже добавляемого потомка
-            if (!treeManagerRepository.existsByParentIdAndName(parentFolder, saverChildFolderName)) {
-                Optional<Category> parentCategory = treeManagerRepository.findById(folderId);
-                treeManagerRepository.addElement(saverChildFolderName, parentCategory.get().getId());
-                log.info(newMessage.createNewMessage(chatId, "Каталог успешно добавлен"));
-            } else {
-                log.warn(newMessage.createNewMessage(chatId, "Подкаталог уже существует, либо предыдущее сообщение иного формата (/add <folderName>)"));
-            }
-            unActivateAddFlagById();
-        } else {
-            if (messageContext.getMessage().length == 2) {
-                log.info("Запуск метода добавления корневой категории");
-                if (!treeManagerRepository.existsByNameAndParentIdIsNull(messageContext.getP1())) {
-                    treeManagerRepository.save(new Category(messageContext.getP1()));
-                    log.info(newMessage.createNewMessage(chatId, "Корневая категория добавлена: " + messageContext.getP1()));
-                } else {
-                    log.warn(newMessage.createNewMessage(chatId, "Корневая категория уже существует"));
-                }
-            } else {
-                if (!directoriesForAddedFolders.isEmpty()) {
-                    log.info(newMessage.createNewMessage(chatId, "Найдены следующие каталоги.\n" +
-                            "Введите /add и номер каталога, в который надо добавить (например: /add 10):\n" +
-                            String.join("\n", directoriesForAddedFolders)));
-                    activateAddFlagAndSaveChildName(messageContext.getP2());
-                } else {
-                    log.error(newMessage.createNewMessage(chatId, "Каталогов для добавления не найдено"));
-                }
-            }
-        }
-
-         */
-
+    @Override
+    public String getNameCommand() {
+        return "add";
     }
 
     private void addChildCategory(MessageContext messageContext) {
@@ -137,11 +104,6 @@ public class AddCategoryCommand implements Command {
                 log.error(newMessage.createNewMessage(chatId, "Каталогов для добавления не найдено"));
             }
         }
-    }
-
-    @Override
-    public String getNameCommand() {
-        return "add";
     }
 
     private void activateAddFlagAndSaveChildName(String p2) {

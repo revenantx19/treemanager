@@ -1,11 +1,9 @@
 package pro.sky.telegrambot.context;
 
+import com.pengrad.telegrambot.model.Document;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Getter
@@ -14,10 +12,13 @@ public class MessageContext {
     private final Long chatId;
     @Setter
     private String[] message;
+    @Setter
+    private Document document;
 
     public MessageContext(Long chatId) {
         this.chatId = chatId;
-        this.message = null;
+        this.message = new String[]{""};
+        this.document = new Document();
     }
 
     public String getCommandName() {
@@ -32,4 +33,10 @@ public class MessageContext {
     public boolean firstParamIsNumeric() {
         return getP1().matches("\\d+");
     }
+
+    public void setUploadCommand(String command, Document newDocument) {
+        document = newDocument;
+        message[0] = command;
+    }
+
 }
