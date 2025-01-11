@@ -10,6 +10,8 @@ import pro.sky.telegrambot.context.MessageContext;
 import pro.sky.telegrambot.messagesender.NewMessage;
 import pro.sky.telegrambot.repository.TreeManagerRepository;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -21,10 +23,9 @@ public class ViewTreeCategoryCommand implements Command {
     @Override
     public void execute(MessageContext messageContext) {
         log.info("Вошли в метод execute команды viewTree");
-        StringBuilder treeString = new StringBuilder();
-        treeManagerRepository.viewCategoryTree()
-                .forEach(category -> treeString.append(category).append("\n"));
-        newMessage.createNewMessage(messageContext.getChatId(), String.valueOf(treeString));
+        List<String> treeList = treeManagerRepository.viewCategoryTree();
+        String treeString = treeList.isEmpty() ? "Таблица пуста" : String.join("\n", treeList);
+        newMessage.createNewMessage(messageContext.getChatId(), treeString);
     }
 
     @Override
