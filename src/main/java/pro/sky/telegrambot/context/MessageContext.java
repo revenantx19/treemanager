@@ -3,11 +3,18 @@ package pro.sky.telegrambot.context;
 import com.pengrad.telegrambot.model.Document;
 import com.pengrad.telegrambot.model.Update;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import pro.sky.telegrambot.validator.CategoryValidator;
-
+/**
+ * Контекст сообщения, содержащий информацию о сообщении и статусе обновления.
+ *
+ * <p>Класс хранит информацию о чате и сообщениях, а также предоставляет методы
+ * для извлечения и обработки параметров команд. Используется для упрощения работы
+ * с обновлениями сообщений в Telegram.
+ *
+ * @see Update
+ * @see Document
+ */
 @Slf4j
 @Getter
 public class MessageContext {
@@ -19,15 +26,19 @@ public class MessageContext {
     private Document document;
 
     private final Update update;
-
+    /**
+     * Создает объект {@link MessageContext} с указанными обновлениями и параметрами сообщения.
+     *
+     * <p>Если сообщение содержит документ, первый параметр будет установлен в "upload",
+     * иначе будут использованы переданные параметры.
+     *
+     * @param update объект {@link Update}, содержащий информацию о текущем обновлении
+     * @param parts массив строк, представляющий параметры команды
+     */
     public MessageContext(Update update, String[] parts) {
         this.message = update.message().document() != null ? new String[]{"upload"} : parts;
         this.chatId = update.message().chat().id();
         this.update = update;
-    }
-
-    public String getCommandName() {
-        return message[0];
     }
     public String getP1() {
         return message[1];
@@ -38,10 +49,4 @@ public class MessageContext {
     public boolean firstParamIsNumeric() {
         return getP1().matches("\\d+");
     }
-
-    public void setUploadCommand(String command, Document newDocument) {
-        document = newDocument;
-        message[0] = command;
-    }
-
 }
