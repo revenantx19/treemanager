@@ -44,7 +44,7 @@ public class AddCategoryCommand implements Command {
     @Override
     public void execute(MessageContext messageContext) {
         log.info("Запуск метода execute команды add");
-        Long chatId = messageContext.getChatId();
+        Long chatId = messageContext.getUpdate().message().chat().id();
         List<String> directoriesForAddedFolders = treeManagerRepository.findPathByFolderName(messageContext.getP1());
 
         try {
@@ -69,7 +69,7 @@ public class AddCategoryCommand implements Command {
 
     private void addChildCategory(MessageContext messageContext) {
         Long folderId = Long.parseLong(messageContext.getP1());
-        Long chatId = messageContext.getChatId();
+        Long chatId = messageContext.getUpdate().message().chat().id();
         Optional<Category> parentFolder = treeManagerRepository.findById(folderId);
         if (parentFolder.isPresent()){
             if (!treeManagerRepository.existsByParentIdAndName(parentFolder, saverChildFolderName)) {
@@ -86,7 +86,7 @@ public class AddCategoryCommand implements Command {
 
     private void addRootOrSelectExistingCategory(MessageContext messageContext, List<String> directoriesForAddedFolders) {
         log.info("Запуск метода добавления корневой категории");
-        Long chatId = messageContext.getChatId();
+        Long chatId = messageContext.getUpdate().message().chat().id();
         if (messageContext.getMessage().length == 2) {
             if (!treeManagerRepository.existsByNameAndParentIdIsNull(messageContext.getP1())) {
                 treeManagerRepository.save(new Category(messageContext.getP1()));

@@ -1,9 +1,12 @@
 package pro.sky.telegrambot.context;
 
 import com.pengrad.telegrambot.model.Document;
+import com.pengrad.telegrambot.model.Update;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import pro.sky.telegrambot.validator.CategoryValidator;
 
 @Slf4j
 @Getter
@@ -15,10 +18,12 @@ public class MessageContext {
     @Setter
     private Document document;
 
-    public MessageContext(Long chatId) {
-        this.chatId = chatId;
-        this.message = new String[]{""};
-        this.document = new Document();
+    private final Update update;
+
+    public MessageContext(Update update, String[] parts) {
+        this.message = update.message().document() != null ? new String[]{"upload"} : parts;
+        this.chatId = update.message().chat().id();
+        this.update = update;
     }
 
     public String getCommandName() {
