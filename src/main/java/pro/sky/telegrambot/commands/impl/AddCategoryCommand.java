@@ -13,7 +13,16 @@ import pro.sky.telegrambot.repository.TreeManagerRepository;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
-
+/**
+ * Команда для добавления категории в структуру каталога.
+ *
+ * <p>Этот класс реализует интерфейс {@link Command} и отвечает за обработку
+ * команды добавления категории. Он может добавлять как корневые, так и дочерние категории
+ * в зависимости от переданных параметров.
+ *
+ * <p>Включает в себя методы для добавления категорий и обработки ошибок
+ * при выполнении команд.
+ */
 @RequiredArgsConstructor
 @Slf4j
 @Service
@@ -27,26 +36,19 @@ public class AddCategoryCommand implements Command {
     private static String saverChildFolderName = null;
 
     /**
-     * Описание работы метода addChildFolder:<br>
-     * 1. Первоначальный if проверяет существует ли такая связь уже в БД и сколько категорий с таким именем существует,<br>
-     * если связь от, если нет, то пишет в чат сообщение об этом.<br>
-     * 2. Далее осуществляется запрос в БД для нахождения полного пути каталога и все подходящие варианты
-     * помещаются в List<String><br>
-     * 3. Второй if проверяет длину List`а и при длине = 1
-     * <p>
-     * выводятся все полные пути к каталогам + их ID в БД для
-     * выбора конкретного каталога, иначе
+     * Выполняет команду добавления категории.
      *
-     * @param parentFolderName - имя каталога родителя
-     * @param childFolderName  - имя добавляемого каталога потомка (ребёнка)
-     * @param chatId           - id Telegram чата
+     * <p>Метод проверяет контекст сообщения и определяет, должна ли
+     * категория быть корневой или дочерней, а затем вызывает
+     * соответствующий метод для добавления.
+     *
+     * @param messageContext контекст сообщения, содержащий параметры команды
      */
     @Override
     public void execute(MessageContext messageContext) {
         log.info("Запуск метода execute команды add");
         Long chatId = messageContext.getUpdate().message().chat().id();
         List<String> directoriesForAddedFolders = treeManagerRepository.findPathByFolderName(messageContext.getP1());
-
         try {
             if (flag && messageContext.firstParamIsNumeric()) {
                 addChildCategory(messageContext);
@@ -61,12 +63,24 @@ public class AddCategoryCommand implements Command {
             log.error(newMessage.createNewMessage(chatId, "Произошла ошибка: " + e.getMessage()));
         }
     }
-
+    /**
+     * Возвращает имя команды.
+     *
+     * @return имя команды как строка
+     */
     @Override
     public String getNameCommand() {
         return "add";
     }
-
+    /**
+     * Добавляет дочернюю категорию.
+     *
+     * <p>Метод принимает контекст сообщения и добавляет новую категорию
+     * в указанной родительской категории, если такая категория существует.
+     *
+     * @param messageContext контекст сообщения
+     * @throws NoSuchElementException если указанная родительская категория не найдена
+     */
     private void addChildCategory(MessageContext messageContext) {
         Long folderId = Long.parseLong(messageContext.getP1());
         Long chatId = messageContext.getUpdate().message().chat().id();
@@ -83,7 +97,15 @@ public class AddCategoryCommand implements Command {
             throw new NoSuchElementException("Категория с ID " + folderId + " не найдена.");
         }
     }
-
+    /**
+     * Добавляет корневую категорию или выбирает существующую категорию.
+     *
+     * <p>Метод проверяет параметры и, если необходимо, запрашивает
+     * у пользователя дополнительные действия для добавления каталогов.
+     *
+     * @param messageContext контекст сообщения
+     * @param directoriesForAddedFolders список существующих каталогов
+     */
     private void addRootOrSelectExistingCategory(MessageContext messageContext, List<String> directoriesForAddedFolders) {
         log.info("Запуск метода добавления корневой категории");
         Long chatId = messageContext.getUpdate().message().chat().id();
@@ -105,12 +127,18 @@ public class AddCategoryCommand implements Command {
             }
         }
     }
-
+    /**
+     * Активирует флаг добавления и сохраняет имя дочерней категории.
+     *
+     * @param p2 имя дочерней категории
+     */
     private void activateAddFlagAndSaveChildName(String p2) {
         saverChildFolderName = p2;
         flag = true;
     }
-
+    /**
+     * Деактивирует флаг добавления категорий.
+     */
     private void unActivateAddFlagById() {
         saverChildFolderName = null;
         flag = false;

@@ -7,8 +7,13 @@ import lombok.Setter;
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
-
+/**
+ * Модель категории для управления иерархией категорий.
+ *
+ * <p>Этот класс представляет категорию в базе данных и включает в себя
+ * информацию о подкатегориях и родительской категории. Класс
+ * аннотирован для использования с JPA для управления персистентностью.
+ */
 @Entity
 @Table(name = "treemanager")
 @Getter
@@ -28,12 +33,16 @@ public class Category {
 
     @OneToMany(mappedBy = "parentId", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Category> subcategories = new ArrayList<>();
-
+    /**
+     * Конструктор для создания категории с указанным именем.
+     *
+     * @param name имя категории
+     */
     public Category(String name) {
         this.name = name;
     }
-
-    public Category() {
-
-    }
+    /**
+     * Конструктор по умолчанию.
+     */
+    public Category() {}
 }

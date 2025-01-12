@@ -14,6 +14,18 @@ import java.util.List;
 @Service
 public class ExcelExportService {
 
+    /**
+     * Экспортирует список категорий в формат Excel и возвращает данные в виде массива байтов.
+     *
+     * <p>Метод создает новый файл Excel, заполняет его данными из списка категорий
+     * и возвращает представление этого файла в виде массива байтов.
+     * Первая строка файла содержит заголовки столбцов: "id", "category_name" и "parent_id".
+     *
+     * @param categories список категорий {@link Category}, которые необходимо экспортировать в Excel
+     * @return массив байтов, представляющий содержимое файла Excel с категориями
+     * @throws IOException если происходит ошибка ввода-вывода при создании или записи файла Excel
+     */
+
     public byte[] exportCategoriesToExcel(List<Category> categories) throws IOException {
         try (Workbook workbook = new XSSFWorkbook(); ByteArrayOutputStream out = new ByteArrayOutputStream()) {
             Sheet sheet = workbook.createSheet("categories");
@@ -32,5 +44,4 @@ public class ExcelExportService {
             return out.toByteArray();
         }
     }
-
 }
