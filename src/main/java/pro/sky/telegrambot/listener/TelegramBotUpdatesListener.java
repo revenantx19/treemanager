@@ -14,6 +14,7 @@ import pro.sky.telegrambot.messagesender.NewMessage;
 import pro.sky.telegrambot.validator.CategoryValidator;
 
 import javax.annotation.PostConstruct;
+import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -35,23 +36,11 @@ public class TelegramBotUpdatesListener implements UpdatesListener {
     @Override
     public int process(List<Update> updates) {
         updates.forEach(update -> {
-            MessageContext messageContext = new MessageContext(update.message().chat().id());
-            Document document = update.message().document();
             try {
-                if (update.message().text() != null) {
-                    messageContext.setMessage(categoryValidator.validateAndClean(update.message().text()));
-                } else {
-                    if (document != null) {
-                        messageContext.setUploadCommand("upload", document);
-                    } else {
-                        log.error(newMessage.createNewMessage(messageContext.getChatId(), "Необрабатываемый тип данных"));
-                    }
-                }
+                MessageContext messageContext = new MessageContext(update, categoryValidator.validateAndClean(update.message().text()));
                 invoker.runCommand(messageContext);
-            } catch (IllegalArgumentException e) {
-                log.error(newMessage.createNewMessage(messageContext.getChatId(), e.getMessage()));
             } catch (Exception e) {
-                log.error(newMessage.createNewMessage(messageContext.getChatId(), e.getMessage()));
+                log.error(newMessage.createNewMessage(update.message().chat().id(), e.getMessage()));
             }
         });
         return UpdatesListener.CONFIRMED_UPDATES_ALL;

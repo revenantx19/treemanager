@@ -18,6 +18,9 @@ public class CategoryValidator {
     private static final List<String> commandsList = List.of("/add", "/del", "/viewTree", "/download", "/upload", "/help");
 
     public String[] validateAndClean(String input) {
+        if (input == null) {
+            return null;
+        }
         String[] parts = input.split("\\s+", 3);
         String invalidCharsPattern = "[\\\\/:;*?\"<>|^'%`~@]";
         if (!parts[0].startsWith("/")) {
@@ -26,7 +29,9 @@ public class CategoryValidator {
         if (!commandsList.contains(parts[0])) {
             throw new IllegalArgumentException("Такой команды не существует, введите /help, чтобы ознакомиться со списком всех команд.");
         }
-
+        if ((parts[0].equals("/add") || parts[0].equals("/del")) && parts.length == 1) {
+            throw new IllegalArgumentException("Отсутствуют параметры введённой команды");
+        }
         parts[0] = parts[0].replace("/","");
         if (parts.length == 1) {
             return parts;
