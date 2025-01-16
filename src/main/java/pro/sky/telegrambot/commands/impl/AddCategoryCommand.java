@@ -2,6 +2,7 @@ package pro.sky.telegrambot.commands.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import pro.sky.telegrambot.commands.Command;
@@ -13,6 +14,7 @@ import pro.sky.telegrambot.repository.TreeManagerRepository;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+
 /**
  * Команда для добавления категории в структуру каталога.
  *
@@ -25,15 +27,13 @@ import java.util.Optional;
  */
 @RequiredArgsConstructor
 @Slf4j
-@Service
 @Component("add")
 public class AddCategoryCommand implements Command {
 
     private final NewMessage newMessage;
     private final TreeManagerRepository treeManagerRepository;
 
-    private static boolean flag = false;
-    private static String saverChildFolderName = null;
+    public static String saverChildFolderName = null;
 
     /**
      * Выполняет команду добавления категории.
@@ -47,10 +47,10 @@ public class AddCategoryCommand implements Command {
     @Override
     public void execute(MessageContext messageContext) {
         log.info("Запуск метода execute команды add");
-        Long chatId = messageContext.getUpdate().message().chat().id();
+        Long chatId = messageContext.getChatId();
         List<String> directoriesForAddedFolders = treeManagerRepository.findPathByFolderName(messageContext.getP1());
         try {
-            if (flag && messageContext.firstParamIsNumeric()) {
+            if (messageContext.firstParamIsNumeric()) {
                 addChildCategory(messageContext);
             } else {
                 addRootOrSelectExistingCategory(messageContext, directoriesForAddedFolders);
@@ -63,6 +63,7 @@ public class AddCategoryCommand implements Command {
             log.error(newMessage.createNewMessage(chatId, "Произошла ошибка: " + e.getMessage()));
         }
     }
+
     /**
      * Возвращает имя команды.
      *
@@ -72,6 +73,7 @@ public class AddCategoryCommand implements Command {
     public String getNameCommand() {
         return "add";
     }
+
     /**
      * Добавляет дочернюю категорию.
      *
@@ -82,28 +84,33 @@ public class AddCategoryCommand implements Command {
      * @throws NoSuchElementException если указанная родительская категория не найдена
      */
     private void addChildCategory(MessageContext messageContext) {
+        log.info("Запуск метода addChildCategory");
         Long folderId = Long.parseLong(messageContext.getP1());
-        Long chatId = messageContext.getUpdate().message().chat().id();
+        log.info("Туть");
+        Long chatId = messageContext.getChatId();
+        log.info("Туть");
         Optional<Category> parentFolder = treeManagerRepository.findById(folderId);
-        if (parentFolder.isPresent()){
-            if (!treeManagerRepository.existsByParentIdAndName(parentFolder, saverChildFolderName)) {
+        log.info("parentFolder: {}", parentFolder.get().getId());
+        if (parentFolder.isPresent()) {
+            if (saverChildFolderName != null && !treeManagerRepository.existsByParentIdAndName(parentFolder, saverChildFolderName)) {
                 treeManagerRepository.addElement(saverChildFolderName, parentFolder.get().getId());
+                saverChildFolderName = null;
                 log.info(newMessage.createNewMessage(chatId, "Каталог успешно добавлен"));
             } else {
-                log.warn(newMessage.createNewMessage(chatId, "Подкаталог уже существует, либо предыдущее сообщение иного формата (/add <folderName>)"));
+                log.warn(newMessage.createNewMessage(chatId, "Подкаталог уже существует, либо предыдущее сообщение не содержит имени подкаталога для добавления"));
             }
-            unActivateAddFlagById();
         } else {
             throw new NoSuchElementException("Категория с ID " + folderId + " не найдена.");
         }
     }
+
     /**
      * Добавляет корневую категорию или выбирает существующую категорию.
      *
      * <p>Метод проверяет параметры и, если необходимо, запрашивает
      * у пользователя дополнительные действия для добавления каталогов.
      *
-     * @param messageContext контекст сообщения
+     * @param messageContext             контекст сообщения
      * @param directoriesForAddedFolders список существующих каталогов
      */
     private void addRootOrSelectExistingCategory(MessageContext messageContext, List<String> directoriesForAddedFolders) {
@@ -121,26 +128,10 @@ public class AddCategoryCommand implements Command {
                 log.info(newMessage.createNewMessage(chatId, "Найдены следующие каталоги.\n" +
                         "Введите /add и номер каталога, в который надо добавить (например: /add 10):\n" +
                         String.join("\n", directoriesForAddedFolders)));
-                activateAddFlagAndSaveChildName(messageContext.getP2());
+                saverChildFolderName = messageContext.getP2();
             } else {
                 log.error(newMessage.createNewMessage(chatId, "Каталогов для добавления не найдено"));
             }
         }
-    }
-    /**
-     * Активирует флаг добавления и сохраняет имя дочерней категории.
-     *
-     * @param p2 имя дочерней категории
-     */
-    private void activateAddFlagAndSaveChildName(String p2) {
-        saverChildFolderName = p2;
-        flag = true;
-    }
-    /**
-     * Деактивирует флаг добавления категорий.
-     */
-    private void unActivateAddFlagById() {
-        saverChildFolderName = null;
-        flag = false;
     }
 }
