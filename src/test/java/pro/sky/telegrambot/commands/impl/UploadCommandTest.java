@@ -1,6 +1,7 @@
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.model.Document;
 import com.pengrad.telegrambot.model.File;
+import com.pengrad.telegrambot.model.Message;
 import com.pengrad.telegrambot.model.Update;
 import com.pengrad.telegrambot.request.GetFile;
 import com.pengrad.telegrambot.response.GetFileResponse;
@@ -35,6 +36,8 @@ class UploadCommandTest {
     @Mock
     private Document document;
     @Mock
+    private Message message;
+    @Mock
     private GetFileResponse getFileResponse;
     @Mock
     private File file;
@@ -42,9 +45,9 @@ class UploadCommandTest {
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        when(messageContext.getUpdate().message().document().fileId()).thenReturn(anyString());
         when(messageContext.getUpdate()).thenReturn(update);
-        when(update.message().document()).thenReturn(document);
+        when(update.message()).thenReturn(message);
+        when(message.document()).thenReturn(document);
         when(document.fileId()).thenReturn("file_id");
         when(bot.execute(any(GetFile.class))).thenReturn(getFileResponse);
         when(getFileResponse.file()).thenReturn(file);
