@@ -31,7 +31,16 @@ class RemoveCategoryCommandTest {
         MockitoAnnotations.openMocks(this);
         removeCategoryCommand = new RemoveCategoryCommand(treeManagerRepository, newMessage);
     }
-
+    /**
+     * Тест №1 для метода {@link RemoveCategoryCommand#execute(MessageContext)}.
+     * <p>
+     * Проверяет, что категория удаляется по идентификатору,
+     * когда передан числовой параметр.
+     * В частности, подтверждается, что метод {@code removeCategoriesById}
+     * из класса {@link TreeManagerRepository} вызывается с идентификатором {@code 10L}.
+     * После выполнения операции флаг {@link RemoveCategoryCommand#flag} сбрасывается в {@code false}.
+     * </p>
+     */
     @Test
     void testExecuteDeletesCategoryById() {
         when(messageContext.getChatId()).thenReturn(1L);
@@ -44,7 +53,17 @@ class RemoveCategoryCommandTest {
         verify(treeManagerRepository).removeCategoriesById(10L);
         assertFalse(RemoveCategoryCommand.flag);
     }
-
+    /**
+     * Тест №2 для метода {@link RemoveCategoryCommand#execute(MessageContext)}.
+     * <p>
+     * Проверяет, что категории находятся по имени,
+     * когда передан нечисловой параметр.
+     * В частности, подтверждается, что метод {@code findPathByFolderName}
+     * из класса {@link TreeManagerRepository} возвращает список путей
+     * для категории с именем {@code "TestCategory"}.
+     * После выполнения операции флаг {@link RemoveCategoryCommand#flag} устанавливается в {@code true}.
+     * </p>
+     */
     @Test
     void testExecuteFindsCategoriesByName() {
         when(messageContext.getChatId()).thenReturn(1L);
@@ -58,7 +77,15 @@ class RemoveCategoryCommandTest {
         verify(newMessage).createNewMessage(anyLong(), contains("path1\npath2"));
         assertTrue(RemoveCategoryCommand.flag);
     }
-
+    /**
+     * Тест №3 для метода {@link RemoveCategoryCommand#execute(MessageContext)}.
+     * <p>
+     * Проверяет обработку случая, когда категория не найдена по имени.
+     * В частности, подтверждается вызов метода {@code createNewMessage}
+     * для класса {@link NewMessage} с сообщением о том, что категория не найдена.
+     * Флаг {@link RemoveCategoryCommand#flag} остаётся {@code false}.
+     * </p>
+     */
     @Test
     void testExecuteHandlesCategoryNotFound() {
         when(messageContext.getChatId()).thenReturn(1L);
@@ -70,7 +97,14 @@ class RemoveCategoryCommandTest {
         verify(newMessage).createNewMessage(anyLong(), contains("Каталог с таким именем не найден"));
         assertFalse(RemoveCategoryCommand.flag);
     }
-
+    /**
+     * Тест №4 для метода {@link RemoveCategoryCommand#execute(MessageContext)}.
+     * <p>
+     * Проверяет, что выполняется правильное поведение при передаче нечислового
+     * параметра. Убедимся, что категории находятся по имени, и
+     * сообщение с путями возвращается корректно.
+     * </p>
+     */
     @Test
     void testExecuteWithNonNumericFirstParam() {
         when(messageContext.getChatId()).thenReturn(1L);
@@ -85,7 +119,14 @@ class RemoveCategoryCommandTest {
         verify(newMessage).createNewMessage(anyLong(), contains("path1"));
         assertTrue(RemoveCategoryCommand.flag);
     }
-
+    /**
+     * Тест №5 для метода {@link RemoveCategoryCommand#removeFolderById(Long)}.
+     * <p>
+     * Проверяет, что метод вызывает репозиторий для удаления папки по идентификатору.
+     * Убедимся, что метод {@code removeCategoriesById} из класса
+     * {@link TreeManagerRepository} вызывается с идентификатором {@code 1L}.
+     * </p>
+     */
     @Test
     void testRemoveFolderByIdCallsRepository() {
         removeCategoryCommand.removeFolderById(1L);

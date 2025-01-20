@@ -10,7 +10,6 @@ import pro.sky.telegrambot.messagesender.NewMessage;
 import pro.sky.telegrambot.model.Category;
 import pro.sky.telegrambot.repository.TreeManagerRepository;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
