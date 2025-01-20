@@ -2,9 +2,7 @@ package pro.sky.telegrambot.commands.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import pro.sky.telegrambot.commands.Command;
 import pro.sky.telegrambot.context.MessageContext;
 import pro.sky.telegrambot.messagesender.NewMessage;
@@ -83,16 +81,14 @@ public class AddCategoryCommand implements Command {
      * @param messageContext контекст сообщения
      * @throws NoSuchElementException если указанная родительская категория не найдена
      */
-    private void addChildCategory(MessageContext messageContext) {
+    public void addChildCategory(MessageContext messageContext) {
         log.info("Запуск метода addChildCategory");
-        Long folderId = Long.parseLong(messageContext.getP1());
-        log.info("Туть");
         Long chatId = messageContext.getChatId();
-        log.info("Туть");
+        Long folderId = Long.parseLong(messageContext.getP1());
         Optional<Category> parentFolder = treeManagerRepository.findById(folderId);
-        log.info("parentFolder: {}", parentFolder.get().getId());
         if (parentFolder.isPresent()) {
             if (saverChildFolderName != null && !treeManagerRepository.existsByParentIdAndName(parentFolder, saverChildFolderName)) {
+                log.info(saverChildFolderName);
                 treeManagerRepository.addElement(saverChildFolderName, parentFolder.get().getId());
                 saverChildFolderName = null;
                 log.info(newMessage.createNewMessage(chatId, "Каталог успешно добавлен"));
@@ -113,9 +109,9 @@ public class AddCategoryCommand implements Command {
      * @param messageContext             контекст сообщения
      * @param directoriesForAddedFolders список существующих каталогов
      */
-    private void addRootOrSelectExistingCategory(MessageContext messageContext, List<String> directoriesForAddedFolders) {
+    public void addRootOrSelectExistingCategory(MessageContext messageContext, List<String> directoriesForAddedFolders) {
         log.info("Запуск метода добавления корневой категории");
-        Long chatId = messageContext.getUpdate().message().chat().id();
+        Long chatId = messageContext.getChatId();
         if (messageContext.getMessage().length == 2) {
             if (!treeManagerRepository.existsByNameAndParentIdIsNull(messageContext.getP1())) {
                 treeManagerRepository.save(new Category(messageContext.getP1()));
@@ -134,4 +130,6 @@ public class AddCategoryCommand implements Command {
             }
         }
     }
+
+
 }
