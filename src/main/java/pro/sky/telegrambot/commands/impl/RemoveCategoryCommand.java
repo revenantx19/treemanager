@@ -24,7 +24,8 @@ import java.util.List;
 public class RemoveCategoryCommand implements Command {
     private final TreeManagerRepository treeManagerRepository;
     private final NewMessage newMessage;
-    private static boolean flag = false;
+    public static boolean flag = false;
+
     /**
      * Выполняет команду удаления категории.
      *
@@ -41,17 +42,17 @@ public class RemoveCategoryCommand implements Command {
         Long chatId = messageContext.getChatId();
         if (flag && messageContext.firstParamIsNumeric()) {
             removeFolderById(Long.valueOf(messageContext.getP1()));
+            flag = false;
             log.info(newMessage.createNewMessage(chatId, "Успешно удалён каталог"));
-            unActivateDeletionFlagById();
         } else {
             List<String> pathsRemovalCategories = treeManagerRepository.findPathByFolderName(messageContext.getP1());
             if (!pathsRemovalCategories.isEmpty()) {
                 String message = String.join("\n", pathsRemovalCategories);
-                log.info(newMessage.createNewMessage(chatId, "Найдены следующие каталоги.\n" +
-                        "Введите /del и номер каталога, который надо удалить (например: /del 10):\n" + message));
-                activateDeletionFlagById();
+                newMessage.createNewMessage(chatId, "Найдены следующие каталоги.\n" +
+                        "Введите /del и номер каталога, который надо удалить (например: /del 10):\n" + message);
+                flag = true;
             } else {
-                log.error(newMessage.createNewMessage(chatId, "Каталог с таким именем не найден"));
+                log.error(newMessage.createNewMessage(chatId, "Каталог с таким именем не найден, либо не предоставлено имя каталога для удаления в предыдущем сообщении"));
             }
         }
     }
@@ -76,24 +77,4 @@ public class RemoveCategoryCommand implements Command {
         log.info("Запуск метода удаления по id");
         treeManagerRepository.removeCategoriesById(id);
     }
-    /**
-     * Активирует флаг удаления.
-     *
-     * <p>Флаг указывает, что следующая операция удаления должна
-     * использовать ID для удаления категории.
-     */
-    private void activateDeletionFlagById() {
-        flag = true;
-    }
-    /**
-     * Деактивирует флаг удаления.
-     *
-     * <p>Сбрасывает флаг, чтобы следующая команда не воспринимала
-     * ID как параметр для удаления.
-     */
-    private void unActivateDeletionFlagById() {
-        flag = false;
-
-    }
-
 }
