@@ -3,10 +3,10 @@ package pro.sky.telegrambot.commands.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import pro.sky.telegrambot.context.MessageContext;
-import pro.sky.telegrambot.messagesender.NewMessage;
 import pro.sky.telegrambot.model.Category;
 import pro.sky.telegrambot.repository.TreeManagerRepository;
 
@@ -22,26 +22,23 @@ import static pro.sky.telegrambot.commands.impl.AddCategoryCommand.saverChildFol
 @Slf4j
 class AddCategoryCommandTest {
     @Mock
-    TreeManagerRepository treeManagerRepository;
-
+    private TreeManagerRepository treeManagerRepository;
     @Mock
-    NewMessage newMessage;
-
-    @Mock
-    MessageContext messageContext;
-
+    private MessageContext messageContext;
+    @InjectMocks
     private AddCategoryCommand addCategoryCommand;
 
-    private Category rootCategory = new Category();
+    private Category rootCategory;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        addCategoryCommand = new AddCategoryCommand(newMessage, treeManagerRepository);
         saverChildFolderName = "folder";
+        rootCategory = new Category();
         rootCategory.setName("root");
         rootCategory.setId(1L);
     }
+
     /**
      * Тест №1 для метода {@link AddCategoryCommand#execute(MessageContext)}.
      * <p>
@@ -61,6 +58,7 @@ class AddCategoryCommandTest {
 
         verify(treeManagerRepository, times(1)).findById(anyLong());
     }
+
     /**
      * Тест №2 для метода {@link AddCategoryCommand#execute(MessageContext)}.
      * <p>
@@ -79,6 +77,7 @@ class AddCategoryCommandTest {
 
         verify(treeManagerRepository, times(1)).findPathByFolderName(anyString());
     }
+
     /**
      * Тест №3 для метода {@link AddCategoryCommand#addChildCategory(MessageContext)}.
      * <p>
@@ -98,6 +97,7 @@ class AddCategoryCommandTest {
 
         assertThrows(NoSuchElementException.class, () -> addCategoryCommand.addChildCategory(messageContext));
     }
+
     /**
      * Тест №4 для метода {@link AddCategoryCommand#addChildCategory(MessageContext)}.
      * <p>
@@ -121,6 +121,7 @@ class AddCategoryCommandTest {
         verify(treeManagerRepository, times(1)).addElement(eq("folder"), eq(1L));
         assertNull(saverChildFolderName);
     }
+
     /**
      * Тест №5 для метода {@link AddCategoryCommand#addRootOrSelectExistingCategory(MessageContext, List)}.
      * <p>

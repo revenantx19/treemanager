@@ -25,22 +25,16 @@ import static org.mockito.Mockito.*;
 
 
 class DownloadCommandTest {
-
     @Mock
     private TreeManagerRepository treeManagerRepository;
-
     @Mock
     private NewMessage newMessage;
-
     @Mock
     private MessageContext messageContext;
-
     @Mock
     private ExcelExportService excelExportService;
-
     @Mock
     private FileSaveService fileSaveService;
-
     @InjectMocks
     private DownloadCommand downloadCommand;
 
@@ -55,7 +49,6 @@ class DownloadCommandTest {
     @Disabled
     @Test
     void testExecute_Success() throws IOException {
-        // Подготовка тестовых данных
         List<Category> categories = List.of(new Category(), new Category());
 
         when(treeManagerRepository.findAll()).thenReturn(categories);
@@ -95,10 +88,8 @@ class DownloadCommandTest {
         when(messageContext.getUpdate().message().chat()).thenReturn(mock(Chat.class));
         when(messageContext.getUpdate().message().chat().id()).thenReturn(1L);
 
-        // Проверка выбрасываемого исключения
         assertThrows(RuntimeException.class, () -> downloadCommand.execute(messageContext));
 
-        // Проверка, что метод не дошел до отправки сообщения
         verify(newMessage, never()).sendNewFile(anyLong(), any(File.class));
     }
 }

@@ -2,6 +2,7 @@ package pro.sky.telegrambot.commands.impl;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import pro.sky.telegrambot.context.MessageContext;
@@ -14,23 +15,20 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 class RemoveCategoryCommandTest {
-
     @Mock
-    TreeManagerRepository treeManagerRepository;
-
+    private TreeManagerRepository treeManagerRepository;
     @Mock
-    NewMessage newMessage;
-
+    private NewMessage newMessage;
     @Mock
-    MessageContext messageContext;
-
+    private MessageContext messageContext;
+    @InjectMocks
     private RemoveCategoryCommand removeCategoryCommand;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        removeCategoryCommand = new RemoveCategoryCommand(treeManagerRepository, newMessage);
     }
+
     /**
      * Тест №1 для метода {@link RemoveCategoryCommand#execute(MessageContext)}.
      * <p>
@@ -53,6 +51,7 @@ class RemoveCategoryCommandTest {
         verify(treeManagerRepository).removeCategoriesById(10L);
         assertFalse(RemoveCategoryCommand.flag);
     }
+
     /**
      * Тест №2 для метода {@link RemoveCategoryCommand#execute(MessageContext)}.
      * <p>
@@ -77,6 +76,7 @@ class RemoveCategoryCommandTest {
         verify(newMessage).createNewMessage(anyLong(), contains("path1\npath2"));
         assertTrue(RemoveCategoryCommand.flag);
     }
+
     /**
      * Тест №3 для метода {@link RemoveCategoryCommand#execute(MessageContext)}.
      * <p>
@@ -97,6 +97,7 @@ class RemoveCategoryCommandTest {
         verify(newMessage).createNewMessage(anyLong(), contains("Каталог с таким именем не найден"));
         assertFalse(RemoveCategoryCommand.flag);
     }
+
     /**
      * Тест №4 для метода {@link RemoveCategoryCommand#execute(MessageContext)}.
      * <p>
@@ -119,6 +120,7 @@ class RemoveCategoryCommandTest {
         verify(newMessage).createNewMessage(anyLong(), contains("path1"));
         assertTrue(RemoveCategoryCommand.flag);
     }
+
     /**
      * Тест №5 для метода {@link RemoveCategoryCommand#removeFolderById(Long)}.
      * <p>
